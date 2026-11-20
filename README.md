@@ -57,10 +57,10 @@ Los notebooks de `core/` se ejecutan en orden. Cada uno lee la salida del anteri
 
 | Paso | Notebook | Entrada | Salida |
 |---|---|---|---|
-| 1 | `1-Diagnóstico de la Calidad Datos (QA).ipynb` | `data/bank.csv` | `output/data-bank_1.parquet` |
-| 2 | `2. Feature engineering.ipynb` | `data-bank_1.parquet` | `output/data-bank_2_FE.parquet` |
+| 1 | `1. Profile_data_QA.ipynb` | `data/bank.csv` | `output/data-bank_1.parquet` |
+| 2 | `2. Feature_engineering.ipynb` | `data-bank_1.parquet` | `output/data-bank_2_FE.parquet` |
 | 3 | `3. EDA.ipynb` | `data-bank_2_FE.parquet` | `output/data-bank_3_EDA.parquet` |
-| 4 | `4. Pre Modelado.ipynb` | `data-bank_3_EDA.parquet` | `output/data-bank_4_PreModeling.parquet` |
+| 4 | `4. Pre_Modelado.ipynb` | `data-bank_3_EDA.parquet` | `output/data-bank_4_PreModeling.parquet` |
 | 5 | `5. Modelado.ipynb` | `data-bank_4_PreModeling.parquet` | `output/fig_*.png`, `output/resultados_modelado.json` |
 
 ## Configuración para reproducir los resultados
@@ -80,32 +80,47 @@ cd bank_marketing_tesis
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 
-pip install scikit-learn==1.8.* pandas numpy matplotlib seaborn pyarrow jupyter
-jupyter notebook
-```
+pip install \
+  pandas numpy scipy scikit-learn \
+  matplotlib seaborn missingno plotly \
+  pyarrow \
+  jupyter notebook ipykernel ipywidgets \
+  watermark ydata-profiling
 
-Luego abrir los notebooks de `core/` y ejecutarlos en el orden indicado.
+jupyter notebook
+
 
 ## Resultados principales
 
-Exactitud (accuracy) sobre el conjunto de prueba y validación cruzada de 5 pliegues:
+Métricas sobre el conjunto de prueba (20 %) y media de **validación cruzada estratificada de 5 pliegues**, con `random_state=42`:
 
-| Modelo | Accuracy (prueba) | Accuracy (validación cruzada) |
-|---|---|---|
-| **SVM** | **84,22 %** | **84,43 %** |
-| Regresión Logística | 82,03 % | 82,03 % |
-| Árbol de Decisión (CART) | 78,53 % | 78,33 % |
-| Naïve Bayes | 74,81 % | 73,83 % |
+| Modelo | Accuracy (prueba) | Accuracy (CV) | Precision | Recall | F1 | AUC |
+|---|---|---|---|---|---|---|
+| **SVM (RBF)** | **83,37 %** | **83,64 %** | 80,30 % | 86,00 % | 0,8305 | **0,9122** |
+| Regresión Logística | 81,58 % | 81,42 % | 79,63 % | 82,12 % | 0,8086 | 0,8965 |
+| Árbol de Decisión (CART) | 77,68 % | 77,47 % | 77,38 % | 74,74 % | 0,7603 | 0,7753 |
+| Naïve Bayes | 71,22 % | 70,44 % | 79,60 % | 52,79 % | 0,6348 | 0,8213 |
 
-- El SVM obtuvo además el mayor AUC (0,9155) entre los cuatro modelos.
-- El Árbol de Decisión alcanza 100 % en entrenamiento (sobreajuste); la validación cruzada permite estimar su desempeño real.
-- Variables más influyentes: duración del último contacto (55,10 %), tipo de contacto (12,50 %) y número de contactos previos a la campaña (8,71 %).
+- El **SVM** fue el mejor modelo tanto en accuracy como en AUC (0,9122), con un recall alto (86 %) que lo hace particularmente útil cuando el costo de un falso negativo (no contactar a un cliente que sí habría aceptado) es relevante.
+- **Análisis de sobreajuste** (brecha `accuracy_train` − `cv_mean`):
+
+| Modelo | Train | CV | Brecha |
+|---|---|---|---|
+| Árbol de Decisión (CART) | 100,00 % | 77,47 % | **+22,53 pp** (sobreajuste severo) |
+| SVM | 87,51 % | 83,64 % | +3,87 pp (sobreajuste leve) |
+| Regresión Logística | 81,77 % | 81,42 % | +0,35 pp |
+| Naïve Bayes | 70,43 % | 70,44 % | −0,01 pp |
+
+- El **Árbol de Decisión** alcanza 100 % en entrenamiento pero cae a ~77 % en validación cruzada: memoriza el set de entrenamiento y no generaliza. La validación cruzada permite medir ese efecto.
+- Variables más influyentes según el árbol CART: **duración del último contacto (55,10 %)**, **tipo de contacto (12,50 %)** y **número de contactos previos a la campaña (8,71 %)**.
 
 ### Limitaciones a considerar
 
 - Se usa la versión **balanceada** del dataset (≈47 % de casos positivos), por lo que las métricas no son directamente comparables con las del conjunto original desbalanceado (≈11 %).
-- El modelo incluye la variable `duration`, que solo se conoce una vez finalizada la llamada. Sin ella, el AUC del SVM baja de 0,9155 a 0,7854.
-- La partición es aleatoria estratificada, no temporal, lo que puede sobreestimar el desempeño frente a una campaña futura.
+- El modelo incluye la variable `duration` (segundos de la última llamada), que solo se conoce *después* de realizada la llamada. Sin esa variable, el AUC del SVM baja aproximadamente a ~0,78, lo que marca el techo real para un escenario predictivo *antes* del contacto.
+- La partición es aleatoria estratificada, **no temporal**: no simula el paso del tiempo entre campañas y puede sobreestimar el desempeño frente a una campaña futura con distribuciones diferentes.
+- Los resultados dependen del estado aleatorio fijado (`random_state=42`). Variaciones de ±0,5 pp en accuracy son esperables al cambiarlo.
+
 
 ## Cómo citar
 
