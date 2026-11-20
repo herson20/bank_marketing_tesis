@@ -36,10 +36,10 @@ bank_marketing_tesis/
 ├── data/
 │   └── bank.csv                              # Dataset original (Kaggle)
 ├── core/
-│   ├── 1-Diagnóstico de la Calidad Datos (QA).ipynb
-│   ├── 2. Feature engineering.ipynb
+│   ├── 1. Profile_data_QA.ipynb
+│   ├── 2. Feature_engineering.ipynb
 │   ├── 3. EDA.ipynb
-│   ├── 4. Pre Modelado.ipynb
+│   ├── 4. Pre_Modelado.ipynb
 │   ├── 5. Modelado.ipynb
 │
 ├── output/
@@ -47,11 +47,6 @@ bank_marketing_tesis/
 │   ├── data-bank_2_FE.parquet                # Salida de la etapa 2 (feature engineering)
 │   ├── data-bank_3_EDA.parquet               # Salida de la etapa 3 (EDA)
 │   ├── data-bank_4_PreModeling.parquet       # Salida de la etapa 4 (pre-modelado)
-│   ├── fig_curva_ROC.png
-│   ├── fig_matrices_confusion.png
-│   ├── fig_metricas_comparacion.png
-│   ├── fig_overfitting.png
-│   └── resultados_modelado.json              # Métricas finales de los modelos
 └── docs/
     └── Comprension_Negocio.xlsx              # Comprensión del negocio (CRISP-DM)
 ```
