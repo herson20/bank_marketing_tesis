@@ -88,7 +88,7 @@ pip install \
   watermark ydata-profiling
 
 jupyter notebook
-
+```
 
 ## Resultados principales
 
